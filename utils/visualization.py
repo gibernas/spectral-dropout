@@ -38,7 +38,7 @@ def plot_hidden_old(activations_batch):
     plt.show()
 
 
-def plot_hidden(writer, activations_batch, i):
+def plot_hidden(writer, activations_batch, i, layer_name='default'):
     """Helper function to display the activations
 
     We expect grayscale images. If multiple channels are present, they refer to filter channels, not image channles"""
@@ -49,7 +49,8 @@ def plot_hidden(writer, activations_batch, i):
         try:
             single_channel = activations_batch[:, idx, :, :]
             big_image = make_grid(single_channel[:, None, :, :])
-            writer.add_image('my_image_' + str(i), big_image, 0)
+            name = ''.join([str(i), '_', str(idx), '_', layer_name])
+            writer.add_image(name, big_image, 0)
         except (RuntimeError, TypeError):
             print('Error with shape: ')
             print(activations_batch.shape)

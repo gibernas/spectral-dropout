@@ -65,6 +65,7 @@ class SpectralDropoutCNN(nn.Module):
         # Name of the model
         self.name = 'SpectralDropoutCNN'
 
+
         # Handle dimensions
         if as_gray:
             self.input_channels = 1
@@ -102,7 +103,7 @@ class SpectralDropoutCNN(nn.Module):
 
     def forward(self, x):
         out = self.spectral_tf(x)
-        out = spectral_masking(out)
+        #out = spectral_masking(out)
         out = self.inv_spectral_tf(out)
         out = self.layer1(out)
         out = self.layer2(out)

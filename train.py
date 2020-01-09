@@ -91,7 +91,7 @@ optimizer = torch.optim.SGD(model.parameters(),
                             weight_decay=1e-3)
 
 # Training
-model_save_name = ''.join(model.name)  # later add configuration
+model_save_name = ''.join([model.name, '.pt'])  # later add configuration
 epoch_steps = len(training_loader)
 writer = SummaryWriter()
 for epoch in range(NUM_EPOCHS):
@@ -115,6 +115,12 @@ for epoch in range(NUM_EPOCHS):
         # Feedforward
         outputs = model(images)
 
+
+        # Visualization
+        for i, key in enumerate(visualization.keys()):
+            batch = visualization[key]
+            plot_hidden(writer, batch, i, layer_name=key._get_name())
+
         # Compute loss
         train_loss = weighted_l1(poses, outputs)
 
@@ -134,15 +140,11 @@ for epoch in range(NUM_EPOCHS):
                           BATCH_SIZE*(idx+1), len(training_set),
                           epoch_loss_list[-1]))
 
-
+        break
     # Backup model after every 10 epochs
     if (epoch + 1) % 10 == 0:
-        #torch.save(model, os.path.join(path_save, model_save_name))
+        torch.save(model, os.path.join(path_save, model_save_name))
 
-        # Visualization
-        for i, key in enumerate(visualization.keys()):
-            batch = visualization[key]
-            plot_hidden(writer, batch, i)
 
 writer.close()
 
