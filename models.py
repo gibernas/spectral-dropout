@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from utils.utils import SpectralTransform, SpectralTransformInverse, spectral_masking
+from utils.visualization import show_batch
 
 
 class VanillaCNN(nn.Module):
