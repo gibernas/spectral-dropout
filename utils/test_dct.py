@@ -1,10 +1,11 @@
 from scipy.fftpack import dct, idct
 from numpy.fft import fft2, ifft2
-from PIL import Image
 import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 import torch
+
+
 def spectral_masking(T):
     T = torch.from_numpy(T)
     threshold = -0.1
@@ -14,6 +15,7 @@ def spectral_masking(T):
     mask = mask_tresh * torch.BoolTensor(mask_dropout)
     T[~mask] = 0
     return T.data.numpy()
+
 
 img_p = ''.join(['/home/gianmarco/spectral-dropout/varia/', 'default_168_sim.jpg'])
 

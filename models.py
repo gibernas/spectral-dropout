@@ -2,8 +2,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
-from utils.utils import SpectralTransform, SpectralTransformInverse, spectral_masking
-from utils.visualization import show_batch
+from utils.utils import SpectralTransform, SpectralTransformInverse, spectral_masking, Reshaper
 
 
 class VanillaCNN(nn.Module):
@@ -59,12 +58,11 @@ class VanillaCNN(nn.Module):
 
 
 class SpectralDropoutCNN(nn.Module):
-    def __init__(self, as_gray=True,):
+    def __init__(self, image_size = None,as_gray=True,):
         super(SpectralDropoutCNN, self).__init__()
 
         # Name of the model
         self.name = 'SpectralDropoutCNN'
-
 
         # Handle dimensions
         if as_gray:
@@ -72,19 +70,22 @@ class SpectralDropoutCNN(nn.Module):
         else:
             self.input_channels = 3
 
-        self.spectral_tf = nn.Sequential(
-            SpectralTransform(self.input_channels, self.input_channels, kernel_size=4, stride=1, padding=0),)
-
-        self.inv_spectral_tf = nn.Sequential(
-            SpectralTransformInverse(self.input_channels, self.input_channels, kernel_size=4, stride=1, padding=0),)
+        self.image_size = image_size
 
         self.layer1 = nn.Sequential(
-            nn.Conv2d(self.input_channels, 32, kernel_size=5, stride=1, padding=2),
+            nn.Conv2d(self.input_channels, 36, kernel_size=5, stride=1, padding=2),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(32))
+
+        self.spectral_tf = nn.Sequential(
+            SpectralTransform(self.image_size, self.image_size, kernel_size=6, stride=1, padding=0),)
+
+        self.inv_spectral_tf = nn.Sequential(
+            SpectralTransformInverse(self.image_size, self.image_size, kernel_size=6, stride=1, padding=0),)
+
         self.layer2 = nn.Sequential(
-            nn.Conv2d(32, 64, kernel_size=3, stride=1),
+            nn.Conv2d(36, 64, kernel_size=3, stride=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
             nn.BatchNorm2d(64))
@@ -102,10 +103,13 @@ class SpectralDropoutCNN(nn.Module):
         self.lin3 = nn.Linear(256, 2)
 
     def forward(self, x):
-        out = self.spectral_tf(x)
-        #out = spectral_masking(out)
-        out = self.inv_spectral_tf(out)
-        out = self.layer1(out)
+        out = self.layer1(x)
+        hypermatrix_reshaper = Reshaper(out)
+        out_hypermatrix = hypermatrix_reshaper.reshape_hypercolumns(out)
+        out_hypermatrix = self.spectral_tf(out_hypermatrix)
+        # out_hypermatrix = spectral_masking(out_hypermatrix)
+        out_hypermatrix = self.inv_spectral_tf(out_hypermatrix)
+        out = hypermatrix_reshaper.reshape_back_hypercolumns(out_hypermatrix)
         out = self.layer2(out)
         out = self.layer3(out)
         out = out.reshape(out.size(0), -1)

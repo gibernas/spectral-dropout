@@ -65,7 +65,7 @@ training_loader = DataLoader(training_set,
                              num_workers=NUM_WORKERS)
 
 # Define the model
-model = SpectralDropoutCNN(as_gray=GREYSCALE)
+model = SpectralDropoutCNN(image_size=31*85, as_gray=GREYSCALE)
 model.double().to(device=device)
 model.apply(weights_init)
 visualization = {}
@@ -102,20 +102,16 @@ for epoch in range(NUM_EPOCHS):
     epoch_batch_list = []
     epoch_epoch_list = []
 
-
     for idx, (images, poses) in enumerate(training_loader):
         # TODO either do this on data or remove it
         # Normalize pose theta to range [-1, 1]
         poses[:, 1] = poses[:, 1]/3.1415
-
         # Assign Tensors to Cuda device
         images = images.double().to(device=device)
+        print(images.shape)
         poses = poses.to(device=device)
-
         # Feedforward
         outputs = model(images)
-
-
         # Visualization
         for i, key in enumerate(visualization.keys()):
             batch = visualization[key]
@@ -139,12 +135,10 @@ for epoch in range(NUM_EPOCHS):
                           idx + 1, epoch_steps,
                           BATCH_SIZE*(idx+1), len(training_set),
                           epoch_loss_list[-1]))
-
         break
     # Backup model after every 10 epochs
     if (epoch + 1) % 10 == 0:
         torch.save(model, os.path.join(path_save, model_save_name))
-
 
 writer.close()
 

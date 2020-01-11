@@ -99,12 +99,10 @@ class TransCropHorizon(object):
 class FilterWeights:
     def __init__(self, n):
 
-        assert n == int(np.sqrt(n))**2, 'The filter dimension is not a square number'
-
-        self.n = n
-        self.m = int(np.sqrt(self.n))
-        self.f_tau = np.zeros((self.n, self.n))
-        self.f_tau_inv = np.zeros((self.n, self.n))
+        self.m = int(n)
+        self.n = n**2
+        self.f_tau = np.zeros((self.m, self.m))
+        self.f_tau_inv = np.zeros((self.m, self.m))
 
         self.compute_weights()
         self.compute_inverse_weights()
@@ -178,6 +176,8 @@ def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('SpectralTransform') != -1:
         spec_filter = FilterWeights(m.kernel_size[0])  # Kernel is square
+        print('SIZEEEEEEEE')
+        print(m.weight.size())
         m.weight = torch.nn.Parameter(torch.from_numpy(spec_filter.f_tau).expand(m.weight.size()),
                                       requires_grad=False)
     elif classname.find('SpectralTransformInverse') != -1:
@@ -196,3 +196,33 @@ def spectral_masking(T):
     mask = mask_tresh * torch.BoolTensor(mask_dropout)
     T[mask] = 0
     return T
+
+
+class Reshaper:
+    """Reshape tensors on hypercolumn format
+
+    Expect input to be ordered as CxHxW"""
+    def __init__(self, tensor):
+
+        self.original_shape = tensor.shape
+        n_channels = self.original_shape[0]
+
+        # Check if we can build the 2D filter
+        assert n_channels == int(np.sqrt(n_channels)) ** 2, 'The number of channels is not a square number'
+        self.m = int(np.sqrt(n_channels))
+
+    def reshape_hypercolumns(self, tensor):
+        # Flatten h and w to get what will be the third dimension w*h
+        tensor = torch.flatten(tensor, start_dim=1, end_dim=2)
+        # Reshape in size sqrt(n) T sqrt(n)
+        tensor = tensor.reshape(self.m, self.m, -1)
+
+        return tensor
+
+    def reshape_back_hypercolumns(self, tensor):
+        # Flatten sqrt(n) x sqrt(n) to get what will be the third dimension (channels)
+        tensor = torch.flatten(tensor, start_dim=0, end_dim=1)
+        # Reshape w*h to get back h x w
+        tensor = tensor.reshape(self.original_shape)
+
+        return tensor
