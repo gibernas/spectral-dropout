@@ -10,7 +10,7 @@ from utils.data_utils import LanePoseDataset
 from utils.utils import ToCustomTensor, TransCropHorizon, weights_init
 from utils.visualization import plot_hidden
 from losses import weighted_l1
-from models import VanillaCNN, SpectralDropoutCNN
+from models import VanillaCNN, SpectralDropoutCNN, SpectralDropoutEasyCNN
 import numpy as np
 
 
@@ -25,7 +25,7 @@ IMAGE_RESOLUTION = 64
 GREYSCALE = True
 
 # Training parameters
-BATCH_SIZE = 16
+BATCH_SIZE = 1 # 16
 LEARNING_RATE = 1e-4
 NUM_EPOCHS = 1
 WEIGHT_DECAY = 1e-3
@@ -65,9 +65,8 @@ training_loader = DataLoader(training_set,
                              num_workers=NUM_WORKERS)
 
 # Define the model
-model = SpectralDropoutCNN(image_size=31*85, as_gray=GREYSCALE)
+model = SpectralDropoutEasyCNN(image_size=31*85, as_gray=GREYSCALE)
 model.double().to(device=device)
-model.apply(weights_init)
 visualization = {}
 
 
@@ -82,7 +81,7 @@ def get_all_layers(net):
         else:
             layer.register_forward_hook(hook_fn)
 
-get_all_layers(model)
+#get_all_layers(model)
 print(model)
 
 # Optimizer
@@ -103,19 +102,17 @@ for epoch in range(NUM_EPOCHS):
     epoch_epoch_list = []
 
     for idx, (images, poses) in enumerate(training_loader):
-        # TODO either do this on data or remove it
         # Normalize pose theta to range [-1, 1]
         poses[:, 1] = poses[:, 1]/3.1415
         # Assign Tensors to Cuda device
         images = images.double().to(device=device)
-        print(images.shape)
         poses = poses.to(device=device)
         # Feedforward
         outputs = model(images)
         # Visualization
-        for i, key in enumerate(visualization.keys()):
-            batch = visualization[key]
-            plot_hidden(writer, batch, i, layer_name=key._get_name())
+        # for i, key in enumerate(visualization.keys()):
+        #     batch = visualization[key]
+        #     plot_hidden(writer, batch, i, layer_name=key._get_name())
 
         # Compute loss
         train_loss = weighted_l1(poses, outputs)
