@@ -231,9 +231,7 @@ class Reshaper:
 
 def to_spectral(x):
     for b in x:
-        print(b.shape)
         for c in b:
-            print(c.shape)
             c = torch.from_numpy(dct(dct(c.T.detach().numpy(), norm='ortho').T, norm='ortho'))
     return x
 

@@ -25,9 +25,9 @@ IMAGE_RESOLUTION = 64
 GREYSCALE = True
 
 # Training parameters
-BATCH_SIZE = 1 # 16
+BATCH_SIZE = 16
 LEARNING_RATE = 1e-4
-NUM_EPOCHS = 1
+NUM_EPOCHS = 200
 WEIGHT_DECAY = 1e-3
 NUM_WORKERS = 1
 GPU = 1
@@ -132,7 +132,6 @@ for epoch in range(NUM_EPOCHS):
                           idx + 1, epoch_steps,
                           BATCH_SIZE*(idx+1), len(training_set),
                           epoch_loss_list[-1]))
-        break
     # Backup model after every 10 epochs
     if (epoch + 1) % 10 == 0:
         torch.save(model, os.path.join(path_save, model_save_name))
