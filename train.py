@@ -1,18 +1,14 @@
+import argparse
+import csv
 import os
 import time
 
 import torch
-from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
-from torchvision import transforms
 
-from utils.data_utils import LanePoseDataset
-from utils.utils import ToCustomTensor, TransCropHorizon, weights_init
-from utils.visualization import plot_hidden
 from losses import weighted_l1
 from models import VanillaCNN, SpectralDropoutCNN, SpectralDropoutEasyCNN
-import numpy as np
-
+from utils.data_utils import get_data_loaders
 
 # System
 path_to_home = os.environ['HOME']
@@ -21,123 +17,171 @@ path_dataset = os.path.join(path_to_proj, 'dataset_LanePose')
 path_save = os.path.join(path_to_proj, 'saved_models')
 
 # Model parameters
-IMAGE_RESOLUTION = 64
 GREYSCALE = True
-
-# Training parameters
-BATCH_SIZE = 16
-LEARNING_RATE = 1e-4
-NUM_EPOCHS = 200
 WEIGHT_DECAY = 1e-3
-NUM_WORKERS = 1
-GPU = 1
 
-if torch.cuda.is_available():
-    device = torch.device(GPU)
-else:
-    device = torch.device('cpu')
+# Training settings
+parser = argparse.ArgumentParser()
 
-# Define required transformations of dataset
-transforms = transforms.Compose([
-    transforms.Resize(IMAGE_RESOLUTION),
-    TransCropHorizon(0.5, set_black=False),
-    transforms.Grayscale(num_output_channels=1),
-    ToCustomTensor(),
-    ])
-
-# Load data & create dataset
-log_names = sorted(next(os.walk(path_dataset))[1])
-
-
-train_dict = {}
-for idx, log_name in enumerate(log_names, 1):
-    log_path = os.path.join(path_dataset, log_name)
-    csv_path = os.path.join(log_path, 'output_pose.csv')
-    img_path = os.path.join(log_path, 'images')
-    train_dict['ts_' + str(idx)] = LanePoseDataset(csv_file=csv_path,
-                                                   img_path=img_path,
-                                                   transform=transforms)
-
-training_set = torch.utils.data.ConcatDataset(train_dict.values())
-training_loader = DataLoader(training_set,
-                             batch_size=BATCH_SIZE,
-                             shuffle=True,
-                             num_workers=NUM_WORKERS)
-
-# Define the model
-model = SpectralDropoutEasyCNN(image_size=31*85, as_gray=GREYSCALE)
-model.double().to(device=device)
-visualization = {}
+parser.add_argument("--gpu",
+                    type=int,
+                    default=False,
+                    help="CUDA:n where n = [0, 1, 2, 3, 4, 5, 6 ,7]")
+parser.add_argument("--workers",
+                    type=int,
+                    default=False,
+                    help="Number of cpu workers [1:8]")
+parser.add_argument("--model",
+                    type=str,
+                    default=None,
+                    help="Model to be trained: [VanillaCNN, SpectralDropoutCNN, SpectralDropoutEasyCNN]")
+parser.add_argument("--epochs",
+                    type=int,
+                    default=1,
+                    help="Training epochs")
+parser.add_argument("--batch_size",
+                    type=int,
+                    default=16,
+                    help="Batch size")
+parser.add_argument("--lr",
+                    type=float,
+                    default=1e-4,
+                    help="Learning rate")
+parser.add_argument("--validation_split",
+                    type=float,
+                    default=0.2,
+                    help="Validation split size")
+parser.add_argument("--image_res",
+                    type=int,
+                    default=64,
+                    help="Resolution of image (not squared, just used for rescaling")
 
 
-def hook_fn(m, i, o):
-    visualization[m] = o
+def train(model, opt, train_loader, dev=torch.device('cpu')):
+    model.train()
+    total_training_loss = 0
 
+    for batch_idx, (images, poses) in enumerate(train_loader):
+        # Assign Tensors to Cuda device
+        images, poses = images.double().to(device=dev), poses.to(device=dev)
 
-def get_all_layers(net):
-    for name, layer in net._modules.items():
-        if isinstance(layer, torch.nn.Sequential):
-            get_all_layers(layer)
-        else:
-            layer.register_forward_hook(hook_fn)
-
-#get_all_layers(model)
-print(model)
-
-# Optimizer
-optimizer = torch.optim.SGD(model.parameters(),
-                            lr=LEARNING_RATE,
-                            weight_decay=1e-3)
-
-# Training
-model_save_name = ''.join([model.name, '.pt'])  # later add configuration
-epoch_steps = len(training_loader)
-writer = SummaryWriter()
-for epoch in range(NUM_EPOCHS):
-
-    time_epoch_start = time.time()
-
-    epoch_loss_list = []
-    epoch_batch_list = []
-    epoch_epoch_list = []
-
-    for idx, (images, poses) in enumerate(training_loader):
         # Normalize pose theta to range [-1, 1]
         poses[:, 1] = poses[:, 1]/3.1415
-        # Assign Tensors to Cuda device
-        images = images.double().to(device=device)
-        poses = poses.to(device=device)
+
         # Feedforward
         outputs = model(images)
-        # Visualization
-        # for i, key in enumerate(visualization.keys()):
-        #     batch = visualization[key]
-        #     plot_hidden(writer, batch, i, layer_name=key._get_name())
 
         # Compute loss
         train_loss = weighted_l1(poses, outputs)
+        total_training_loss += train_loss.item()
 
         epoch_loss_list.append(train_loss.item())
         epoch_epoch_list.append(epoch)
 
         # Backpropagate
-        optimizer.zero_grad()
+        opt.zero_grad()
         train_loss.backward()
-        optimizer.step()
+        opt.step()
 
-        # Print progress
-        if (idx + 1) % BATCH_SIZE == 0:
-            print('Epoch [{}/{}], Step [{}/{}], Item [{}/{}], Loss: {:.6f}' #, Accuracy: {:.2f}%'
-                  .format(epoch + 1, NUM_EPOCHS,
-                          idx + 1, epoch_steps,
-                          BATCH_SIZE*(idx+1), len(training_set),
-                          epoch_loss_list[-1]))
-    # Backup model after every 10 epochs
-    if (epoch + 1) % 10 == 0:
-        torch.save(model, os.path.join(path_save, model_save_name))
+    return total_training_loss.item() / len(train_loader)
 
-writer.close()
 
-# Save model
-torch.save(model, os.path.join(path_save, model_save_name))
-print('Model saved:', os.path.join(path_save, model_save_name))
+def test(model, val_loader, dev=torch.device('cpu')):
+    model.eval()
+    validation_loss = 0
+
+    with torch.no_grad():
+        for batch_idx, (images, poses) in enumerate(val_loader):
+            # Assign Tensors to Cuda device
+            images, poses = images.double().to(device=dev), poses.to(device=dev)
+
+            # Normalize pose theta to range [-1, 1]
+            poses[:, 1] = poses[:, 1] / 3.1415
+
+            # Feedforward
+            outputs = model(images)
+            validation_loss += weighted_l1(poses, outputs).item()
+    return validation_loss.item() / len(val_loader)
+
+
+if __name__ == "main":
+    args = parser.parse_args()
+
+    use_cuda = args.gpu and torch.cuda.is_available()
+    device = torch.device(args.gpu if use_cuda else "cpu")
+    print('Using device %s' % device)
+
+    # Define the model
+    if args.model == "VanillaCNN":
+        model = VanillaCNN(as_gray=GREYSCALE)
+        model.double().to(device=device)
+    elif args.model == "SpectralDropoutCNN":
+        model = SpectralDropoutCNN(as_gray=GREYSCALE)
+        model.double().to(device=device)
+    elif args.model == "SpectralDropoutEasyCNN":
+        model = SpectralDropoutEasyCNN(as_gray=GREYSCALE)
+        model.double().to(device=device)
+    else:
+        raise RuntimeError ('You did not provide a valid model to train!')
+    time_start = time.time()
+    model_save_name = ''.join([model.name, str(time_start), '_lr', str(args.lr),
+                               '_bs', str(args.bs), '_totepo', str(args.epochs)])
+    print(model)
+
+    # Define the optimizer
+    optimizer = torch.optim.SGD(model.parameters(),
+                                lr=args.lr,
+                                weight_decay=1e-3)
+
+    training_loader, validation_loader = get_data_loaders(path_dataset, args)
+
+    writer = SummaryWriter()
+    model_data_log = []
+    for epoch in range(args.epochs):
+        time_epoch_start = time.time()
+
+        epoch_loss_list = []
+        epoch_batch_list = []
+        epoch_epoch_list = []
+
+        training_loss = train(model, optimizer, training_loader, dev=device)
+        writer.add_scalar('Loss/train', training_loss, epoch)
+
+        validation_loss = test(model, validation_loader, dev=device)
+        writer.add_scalar('Loss/val', validation_loss, epoch)
+
+        # Compute some training stats and log them
+        time_epoch_end = time.time()
+        time_epoch = time_epoch_end - time_epoch_start
+        model_data_log.append([epoch, training_loss, validation_loss, time_epoch])
+
+        # Backup model after every 10 epochs
+        if (epoch + 1) % 10 == 0:
+            current_model_save_name = ''.join([model_save_name, '_epo%s' % epoch, '.pt'])
+            torch.save(model, os.path.join(path_save, current_model_save_name))
+            print('Model saved on epoch %s' % epoch)
+
+    writer.close()
+
+    # Write config csv TODO add sim vs real information!
+    config_name = ''.join([model_save_name, '_config.csv'])
+    config_path = os.path.join(path_save, config_name)
+    with open(config_path, 'w') as csv_config:
+        wr = csv.writer(csv_config, quoting=csv.QUOTE_ALL)
+        wr.writerow(['learning_rate', 'batch_size', 'num_epochs'])
+        wr.writerow([args.lr, args.batch_size, args.epochs])
+
+    # Write training data csv
+    data_name = ''.join([model_save_name, '_config.csv'])
+    data_path = os.path.join(path_save, data_name)
+    with open(data_path, 'w') as csv_data:
+        wr = csv.writer(csv_data, quoting=csv.QUOTE_ALL)
+        wr.writerow(['epoch', 'training_loss', 'validation_loss', 'duration [s]'])
+        for row in model_data_log:
+            wr.writerow(row)
+
+
+
+
+
+

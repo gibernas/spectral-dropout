@@ -5,8 +5,8 @@ import pandas as pd
 import torch
 from PIL import Image
 from skimage import io
-from torch.utils.data import Dataset
-
+from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
+from utils.utils import ToCustomTensor, TransCropHorizon
 
 
 class LanePoseDataset(Dataset):
@@ -49,3 +49,56 @@ class LanePoseDataset(Dataset):
 
         return image, pose
 
+
+def get_data_loaders(path_dataset, transforms, args):
+
+    # Define required transformations of dataset
+    transforms = transforms.Compose([
+        transforms.Resize(args.image_res),
+        TransCropHorizon(0.5, set_black=False),
+        transforms.Grayscale(num_output_channels=1),
+        ToCustomTensor(),
+    ])
+
+    # Load data & create dataset
+    log_names = sorted(next(os.walk(path_dataset))[1])
+
+    dataset_dict = {}
+    for idx, log_name in enumerate(log_names, 1):
+        log_path = os.path.join(path_dataset, log_name)
+        csv_path = os.path.join(log_path, 'output_pose.csv')
+        img_path = os.path.join(log_path, 'images')
+        dataset_dict['ts_' + str(idx)] = LanePoseDataset(csv_file=csv_path,
+                                                         img_path=img_path,
+                                                         transform=transforms)
+
+    dataset = torch.utils.data.ConcatDataset(dataset_dict.values())
+
+    validation_split = args.validation_split
+
+    dataset_size = len(dataset)
+    indices = list(range(dataset_size))
+
+    split = int(np.floor(validation_split * dataset_size))
+
+    shuffle_dataset = True
+    if shuffle_dataset:
+        np.random.shuffle(indices)
+
+    train_indices, val_indices = indices[split:], indices[:split]
+
+    train_sampler = SubsetRandomSampler(train_indices)
+    valid_sampler = SubsetRandomSampler(val_indices)
+
+    training_loader = DataLoader(dataset,
+                                 batch_size=args.batch_size,
+                                 shuffle=True,
+                                 num_workers=args.workers,
+                                 sampler=train_sampler)
+
+    validation_loader = DataLoader(dataset,
+                                   batch_size=args.batch_size,
+                                   shuffle=True,
+                                   num_workers=args.workers,
+                                   sampler=valid_sampler)
+    return training_loader, validation_loader
