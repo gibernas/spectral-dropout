@@ -1,3 +1,4 @@
+import argparse
 import numpy as np
 import torch
 from PIL import Image
@@ -241,3 +242,46 @@ def to_spatial(x):
         for c in b:
             c = torch.from_numpy(idct(idct(c.T.detach().numpy(), norm='ortho').T, norm='ortho'))
     return x
+
+
+def get_parser():
+    # Parser for training settings
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--gpu",
+                        type=int,
+                        default=False,
+                        help="CUDA:n where n = [0, 1, 2, 3, 4, 5, 6 ,7]")
+    parser.add_argument("--workers",
+                        type=int,
+                        default=False,
+                        help="Number of cpu workers [1:8]")
+    parser.add_argument("--model",
+                        type=str,
+                        default=None,
+                        help="Model to be trained: [VanillaCNN, SpectralDropoutCNN, SpectralDropoutEasyCNN]")
+    parser.add_argument("--epochs",
+                        type=int,
+                        default=1,
+                        help="Training epochs")
+    parser.add_argument("--batch_size",
+                        type=int,
+                        default=16,
+                        help="Batch size")
+    parser.add_argument("--lr",
+                        type=float,
+                        default=1e-4,
+                        help="Learning rate")
+    parser.add_argument("--dataset",
+                        type=str,
+                        default='real',
+                        help="Sim: 'sim'; real: 'real'; both='sim_real'")
+    parser.add_argument("--validation_split",
+                        type=float,
+                        default=0.2,
+                        help="Validation split size")
+    parser.add_argument("--image_res",
+                        type=int,
+                        default=64,
+                        help="Resolution of image (not squared, just used for rescaling")
+    return parser

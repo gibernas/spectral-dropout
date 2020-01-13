@@ -1,4 +1,3 @@
-import argparse
 import csv
 import os
 import time
@@ -9,6 +8,7 @@ from torch.utils.tensorboard import SummaryWriter
 from losses import weighted_l1
 from models import VanillaCNN, SpectralDropoutCNN, SpectralDropoutEasyCNN
 from utils.data_utils import get_data_loaders
+from utils.utils import get_parser
 
 # System
 path_to_home = os.environ['HOME']
@@ -21,45 +21,8 @@ path_save = os.path.join(path_to_proj, 'saved_models')
 GREYSCALE = True
 WEIGHT_DECAY = 1e-3
 
-# Training settings
-parser = argparse.ArgumentParser()
-
-parser.add_argument("--gpu",
-                    type=int,
-                    default=False,
-                    help="CUDA:n where n = [0, 1, 2, 3, 4, 5, 6 ,7]")
-parser.add_argument("--workers",
-                    type=int,
-                    default=False,
-                    help="Number of cpu workers [1:8]")
-parser.add_argument("--model",
-                    type=str,
-                    default=None,
-                    help="Model to be trained: [VanillaCNN, SpectralDropoutCNN, SpectralDropoutEasyCNN]")
-parser.add_argument("--epochs",
-                    type=int,
-                    default=1,
-                    help="Training epochs")
-parser.add_argument("--batch_size",
-                    type=int,
-                    default=16,
-                    help="Batch size")
-parser.add_argument("--lr",
-                    type=float,
-                    default=1e-4,
-                    help="Learning rate")
-parser.add_argument("--dataset",
-                    type=str,
-                    default='real',
-                    help="Sim: 'sim'; real: 'real'; both='sim,real'")
-parser.add_argument("--validation_split",
-                    type=float,
-                    default=0.2,
-                    help="Validation split size")
-parser.add_argument("--image_res",
-                    type=int,
-                    default=64,
-                    help="Resolution of image (not squared, just used for rescaling")
+# Get a parser for the training settings
+parser = get_parser()
 
 
 def train(model, opt, train_loader, dev=torch.device('cpu')):
@@ -93,7 +56,7 @@ def train(model, opt, train_loader, dev=torch.device('cpu')):
 
 def test(model, val_loader, dev=torch.device('cpu')):
     model.eval()
-    validation_loss = 0
+    val_loss = 0
 
     with torch.no_grad():
         for batch_idx, (images, poses) in enumerate(val_loader):
@@ -105,8 +68,8 @@ def test(model, val_loader, dev=torch.device('cpu')):
 
             # Feedforward
             outputs = model(images)
-            validation_loss += weighted_l1(poses, outputs).item()
-    return validation_loss.item() / len(val_loader)
+            val_loss += weighted_l1(poses, outputs).item()
+    return val_loss.item() / len(val_loader)
 
 
 if __name__ == "main":
@@ -178,8 +141,8 @@ if __name__ == "main":
     config_path = os.path.join(path_save, config_name)
     with open(config_path, 'w') as csv_config:
         wr = csv.writer(csv_config, quoting=csv.QUOTE_ALL)
-        wr.writerow(['learning_rate', 'batch_size', 'num_epochs'])
-        wr.writerow([args.lr, args.batch_size, args.epochs])
+        wr.writerow(['dataset', 'learning_rate', 'batch_size', 'num_epochs'])
+        wr.writerow([args.dataset, args.lr, args.batch_size, args.epochs])
 
     # Write training data csv
     data_name = ''.join([model_save_name, '_config.csv'])
