@@ -91,7 +91,7 @@ if __name__ == "__main__":
         model = SpectralDropoutCNN(as_gray=GREYSCALE)
         model.double().to(device=device)
     elif args.model == "SpectralDropoutEasyCNN":
-        model = SpectralDropoutEasyCNN(as_gray=GREYSCALE)
+        model = SpectralDropoutEasyCNN(as_gray=GREYSCALE, dev=device)
         model.double().to(device=device)
     else:
         raise RuntimeError ('You did not provide a valid model to train!')

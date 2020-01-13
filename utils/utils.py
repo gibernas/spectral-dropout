@@ -189,7 +189,7 @@ def weights_init(m):
 
 
 def spectral_masking(T):
-    T = T.detach().numpy()
+    T = T.detach().cpu().numpy()
     threshold = -0.1
     p_keep = 1
     mask_tresh = np.abs(T) > np.max(T) ** threshold # questi li tengo, exp treshold bsc log scale

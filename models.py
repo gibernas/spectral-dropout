@@ -133,11 +133,12 @@ class SpectralDropoutCNN(nn.Module):
 
 
 class SpectralDropoutEasyCNN(nn.Module):
-    def __init__(self, image_size = None,as_gray=True,):
+    def __init__(self, image_size = None,as_gray=True, dev='cpu'):
         super(SpectralDropoutEasyCNN, self).__init__()
 
         # Name of the model
         self.name = 'SpectralDropoutCNN'
+        self.dev = dev
 
         # Handle dimensions
         if as_gray:
@@ -170,7 +171,7 @@ class SpectralDropoutEasyCNN(nn.Module):
 
     def forward(self, x):
         out = to_spectral(x)
-        out = spectral_masking(out)
+        out = spectral_masking(out).to(device=self.dev)
         out = to_spatial(out)
         out = self.layer1(out)
         out = self.layer2(out)
