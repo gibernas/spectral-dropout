@@ -233,14 +233,14 @@ class Reshaper:
 def to_spectral(x):
     for b in x:
         for c in b:
-            c = torch.from_numpy(dct(dct(c.T.detach().numpy(), norm='ortho').T, norm='ortho'))
+            c = torch.from_numpy(dct(dct(c.T.detach().cpu().numpy(), norm='ortho').T, norm='ortho'))
     return x
 
 
 def to_spatial(x):
     for b in x:
         for c in b:
-            c = torch.from_numpy(idct(idct(c.T.detach().numpy(), norm='ortho').T, norm='ortho'))
+            c = torch.from_numpy(idct(idct(c.T.detach().cpu().numpy(), norm='ortho').T, norm='ortho'))
     return x
 
 
