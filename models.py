@@ -1,4 +1,4 @@
-
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -52,7 +52,7 @@ class VanillaCNN(nn.Module):
         out = self.drop_out_lin2(out)
         out = F.relu(self.lin2(out))
         out = self.drop_out_lin3(out)
-        out = F.tanh(self.lin3(out))
+        out = torch.tanh(self.lin3(out))
 
         return out
 
@@ -128,7 +128,7 @@ class SpectralDropoutCNN(nn.Module):
         out = self.drop_out_lin2(out)
         out = F.relu(self.lin2(out))
         out = self.drop_out_lin3(out)
-        out = F.tanh(self.lin3(out))
+        out = torch.tanh(self.lin3(out))
         return out
 
 
@@ -181,5 +181,5 @@ class SpectralDropoutEasyCNN(nn.Module):
         out = self.drop_out_lin2(out)
         out = F.relu(self.lin2(out))
         out = self.drop_out_lin3(out)
-        out = F.tanh(self.lin3(out))
+        out = torch.tanh(self.lin3(out))
         return out

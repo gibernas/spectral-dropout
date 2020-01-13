@@ -51,7 +51,7 @@ def train(model, opt, train_loader, dev=torch.device('cpu')):
         train_loss.backward()
         opt.step()
 
-    return total_training_loss.item() / len(train_loader)
+    return total_training_loss / len(train_loader)
 
 
 def test(model, val_loader, dev=torch.device('cpu')):
@@ -69,10 +69,12 @@ def test(model, val_loader, dev=torch.device('cpu')):
             # Feedforward
             outputs = model(images)
             val_loss += weighted_l1(poses, outputs).item()
-    return val_loss.item() / len(val_loader)
+
+    return val_loss / len(val_loader)
 
 
-if __name__ == "main":
+if __name__ == "__main__":
+
     args = parser.parse_args()
 
     use_cuda = args.gpu and torch.cuda.is_available()
@@ -93,7 +95,7 @@ if __name__ == "main":
         raise RuntimeError ('You did not provide a valid model to train!')
     time_start = time.time()
     model_save_name = ''.join([model.name, str(time_start), '_lr', str(args.lr),
-                               '_bs', str(args.bs), '_totepo', str(args.epochs)])
+                               '_bs', str(args.batch_size), '_totepo', str(args.epochs)])
     print(model)
 
     # Define the optimizer
@@ -112,6 +114,7 @@ if __name__ == "main":
     model_data_log = []
     for epoch in range(args.epochs):
         time_epoch_start = time.time()
+        print("Starting epoch %s" % epoch)
 
         epoch_loss_list = []
         epoch_batch_list = []
@@ -136,8 +139,8 @@ if __name__ == "main":
 
     writer.close()
 
-    # Write config csv TODO add sim vs real information!
-    config_name = ''.join([model_save_name, '_config.csv'])
+    # Write config csv
+    config_name = '_'.join([model_save_name, str(args.dataset), 'config.csv'])
     config_path = os.path.join(path_save, config_name)
     with open(config_path, 'w') as csv_config:
         wr = csv.writer(csv_config, quoting=csv.QUOTE_ALL)
@@ -152,9 +155,3 @@ if __name__ == "main":
         wr.writerow(['epoch', 'training_loss', 'validation_loss', 'duration [s]'])
         for row in model_data_log:
             wr.writerow(row)
-
-
-
-
-
-

@@ -254,7 +254,7 @@ def get_parser():
                         help="CUDA:n where n = [0, 1, 2, 3, 4, 5, 6 ,7]")
     parser.add_argument("--workers",
                         type=int,
-                        default=False,
+                        default=1,
                         help="Number of cpu workers [1:8]")
     parser.add_argument("--model",
                         type=str,

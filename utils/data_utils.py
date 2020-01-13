@@ -95,13 +95,11 @@ def get_data_loaders(list_path_datasets, args):
 
     training_loader = DataLoader(dataset,
                                  batch_size=args.batch_size,
-                                 shuffle=True,
                                  num_workers=args.workers,
                                  sampler=train_sampler)
 
     validation_loader = DataLoader(dataset,
                                    batch_size=args.batch_size,
-                                   shuffle=True,
                                    num_workers=args.workers,
                                    sampler=valid_sampler)
     return training_loader, validation_loader
