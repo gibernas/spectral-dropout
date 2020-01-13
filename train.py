@@ -13,8 +13,10 @@ from utils.utils import get_parser
 # System
 path_to_home = os.environ['HOME']
 path_to_proj = os.path.join(path_to_home, 'spectral-dropout')
-path_dataset_real = os.path.join(path_to_proj, 'dataset_LanePose')
-path_dataset_sim = os.path.join(path_to_proj, 'dataset_LanePose_sim')
+# path_dataset_real = os.path.join(path_to_proj, 'dataset_LanePose')
+path_dataset_real = '/media/9tb/ds/dataset_LanePose'
+# path_dataset_sim = os.path.join(path_to_proj, 'dataset_LanePose_sim')
+path_dataset_sim = '/media/9tb/ds/dataset_LanePose_sim'
 path_save = os.path.join(path_to_proj, 'saved_models')
 
 # Model parameters

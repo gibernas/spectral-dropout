@@ -63,6 +63,7 @@ def get_data_loaders(list_path_datasets, args):
 
     dataset_dict = {}
     for path_dataset in list_path_datasets:
+        print('Looking in: %s' % path_dataset)
         env = path_dataset.split('_')[-1]
         # Load data & create dataset
         log_names = sorted(next(os.walk(path_dataset))[1])
