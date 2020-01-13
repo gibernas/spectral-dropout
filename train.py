@@ -131,6 +131,7 @@ if __name__ == "__main__":
         # Compute some training stats and log them
         time_epoch_end = time.time()
         time_epoch = time_epoch_end - time_epoch_start
+        writer.add_scalar('Epoch time', time_epoch, epoch)
         model_data_log.append([epoch, training_loss, validation_loss, time_epoch])
 
         # Backup model after every 10 epochs
