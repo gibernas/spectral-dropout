@@ -6,6 +6,7 @@ import torch
 from PIL import Image
 from skimage import io
 from torch.utils.data import Dataset, DataLoader, SubsetRandomSampler
+import torchvision.transforms as transforms
 from utils.utils import ToCustomTensor, TransCropHorizon
 
 
@@ -50,27 +51,29 @@ class LanePoseDataset(Dataset):
         return image, pose
 
 
-def get_data_loaders(path_dataset, transforms, args):
+def get_data_loaders(list_path_datasets, args):
 
     # Define required transformations of dataset
-    transforms = transforms.Compose([
+    tfs = transforms.Compose([
         transforms.Resize(args.image_res),
         TransCropHorizon(0.5, set_black=False),
         transforms.Grayscale(num_output_channels=1),
         ToCustomTensor(),
     ])
 
-    # Load data & create dataset
-    log_names = sorted(next(os.walk(path_dataset))[1])
-
     dataset_dict = {}
-    for idx, log_name in enumerate(log_names, 1):
-        log_path = os.path.join(path_dataset, log_name)
-        csv_path = os.path.join(log_path, 'output_pose.csv')
-        img_path = os.path.join(log_path, 'images')
-        dataset_dict['ts_' + str(idx)] = LanePoseDataset(csv_file=csv_path,
-                                                         img_path=img_path,
-                                                         transform=transforms)
+    for path_dataset in list_path_datasets:
+        env = path_dataset.split('_')[-1]
+        # Load data & create dataset
+        log_names = sorted(next(os.walk(path_dataset))[1])
+
+        for idx, log_name in enumerate(log_names, 1):
+            log_path = os.path.join(path_dataset, log_name)
+            csv_path = os.path.join(log_path, 'output_pose.csv')
+            img_path = os.path.join(log_path, 'images')
+            dataset_dict['ts_' + str(idx) + '_' + env] = LanePoseDataset(csv_file=csv_path,
+                                                                         img_path=img_path,
+                                                                         transform=tfs)
 
     dataset = torch.utils.data.ConcatDataset(dataset_dict.values())
 

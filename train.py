@@ -13,7 +13,8 @@ from utils.data_utils import get_data_loaders
 # System
 path_to_home = os.environ['HOME']
 path_to_proj = os.path.join(path_to_home, 'spectral-dropout')
-path_dataset = os.path.join(path_to_proj, 'dataset_LanePose')
+path_dataset_real = os.path.join(path_to_proj, 'dataset_LanePose')
+path_dataset_sim = os.path.join(path_to_proj, 'dataset_LanePose_sim')
 path_save = os.path.join(path_to_proj, 'saved_models')
 
 # Model parameters
@@ -47,6 +48,10 @@ parser.add_argument("--lr",
                     type=float,
                     default=1e-4,
                     help="Learning rate")
+parser.add_argument("--dataset",
+                    type=str,
+                    default='real',
+                    help="Sim: 'sim'; real: 'real'; both='sim,real'")
 parser.add_argument("--validation_split",
                     type=float,
                     default=0.2,
@@ -133,7 +138,12 @@ if __name__ == "main":
                                 lr=args.lr,
                                 weight_decay=1e-3)
 
-    training_loader, validation_loader = get_data_loaders(path_dataset, args)
+    list_path_datasets = []
+    if 'real' in args.dataset:
+        list_path_datasets.append(path_dataset_real)
+    if 'sim' in args.dataset:
+        list_path_datasets.append(path_dataset_sim)
+    training_loader, validation_loader = get_data_loaders(list_path_datasets, args)
 
     writer = SummaryWriter()
     model_data_log = []
