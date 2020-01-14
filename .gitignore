@@ -5,3 +5,5 @@ runs
 dataset*
 saved_models
 varia
+
+Makefile
