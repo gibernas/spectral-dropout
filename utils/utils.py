@@ -196,7 +196,7 @@ def spectral_masking(T):
     mask_dropout = np.random.random_sample(T.shape) < p_keep # questi li tengo
     mask = mask_tresh * mask_dropout
     T[~mask] = 0
-    return torch.from_numpy(T)se
+    return torch.from_numpy(T)
 
 
 class Reshaper:
