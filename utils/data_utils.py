@@ -21,6 +21,8 @@ class LanePoseDataset(Dataset):
             transform: Optional transform to be applied on a batch.
         """
         self.data = pd.read_csv(csv_file, header=0, engine='python')
+        # Remove NaNs, if the dataset was bad (i.e. out of lane)
+        self.data = self.data.dropna(subset=['centerDistance', 'relativeHeading'])
         self.img_path = img_path
         self.transform = transform
 
@@ -79,9 +81,6 @@ def get_data_loaders(list_path_datasets, args):
                 dataset_dict['ts_' + str(idx) + '_' + env] = LanePoseDataset(csv_file=csv_path,
                                                                              img_path=img_path,
                                                                              transform=tfs)
-                # Remove NaNs, if the dataset was bad (i.e. out of lane)
-                dataset_dict['ts_' + str(idx) + '_' + env].data = \
-                    dataset_dict['ts_' + str(idx) + '_' + env].data.dropna(subset=['centerDistance', 'relativeHeading'])
 
     dataset = torch.utils.data.ConcatDataset(dataset_dict.values())
 

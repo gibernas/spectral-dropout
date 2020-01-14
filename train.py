@@ -13,10 +13,6 @@ from utils.utils import get_parser
 # System
 path_to_home = os.environ['HOME']
 path_to_proj = os.path.join(path_to_home, 'spectral-dropout')
-# path_dataset_real = os.path.join(path_to_proj, 'dataset_LanePose')
-path_dataset_real = '/media/9tb/ds/dataset_LanePose'
-# path_dataset_sim = os.path.join(path_to_proj, 'dataset_LanePose_sim')
-path_dataset_sim = '/media/9tb/ds/dataset_LanePose_sim'
 path_save = os.path.join(path_to_proj, 'saved_models')
 
 # Model parameters
@@ -82,6 +78,17 @@ if __name__ == "__main__":
     use_cuda = args.gpu and torch.cuda.is_available()
     device = torch.device(args.gpu if use_cuda else "cpu")
     print('Using device %s' % device)
+
+    if args.host == 'rudolf':
+        path_dataset_root = '/media/9tb/ds'
+    elif args.host == 'local':
+        path_dataset_root = path_to_proj
+    elif args.host == 'leonhard':
+        path_dataset_root = '/cluster/scratch/gibernas'
+    else:
+        raise RuntimeError('The specified host is not supported')
+    path_dataset_real = os.path.join(path_dataset_root, 'dataset_LanePose')
+    path_dataset_sim = os.path.join(path_dataset_root, 'dataset_LanePose_sim')
 
     # Define the model
     if args.model == "VanillaCNN":

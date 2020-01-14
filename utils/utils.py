@@ -248,6 +248,11 @@ def get_parser():
     # Parser for training settings
     parser = argparse.ArgumentParser()
 
+    parser.add_argument("--host",
+                        type=str,
+                        default='rudolf',
+                        help="local, rudolf or leonhard ")
+
     parser.add_argument("--gpu",
                         type=int,
                         default=False,
