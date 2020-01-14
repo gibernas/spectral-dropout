@@ -112,7 +112,7 @@ if __name__ == "__main__":
         list_path_datasets.append(path_dataset_sim)
     training_loader, validation_loader = get_data_loaders(list_path_datasets, args)
 
-    writer = SummaryWriter()
+    writer = SummaryWriter(os.path.join('runs', model_save_name))
     model_data_log = []
     for epoch in range(args.epochs):
         time_epoch_start = time.time()
