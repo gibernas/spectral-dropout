@@ -149,6 +149,7 @@ if __name__ == "__main__":
         # Backup model after every 10 epochs
         if (epoch + 1) % 10 == 0:
             current_model_save_name = ''.join([model_save_name, '_epo%s' % epoch, '.pt'])
+            os.mkdir(os.path.join(path_save, model_save_name))
             torch.save(model, os.path.join(path_save, model_save_name,  current_model_save_name))
             print('Model saved on epoch %s' % epoch)
 
