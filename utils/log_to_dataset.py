@@ -49,9 +49,9 @@ class Reader:
 
 path_to_home = os.environ['HOME']
 path_to_proj = os.path.join(path_to_home, 'spectral-dropout')
-path_dataset = os.path.join(path_to_proj, 'simulator_dataset')
-path_file = os.path.join(path_dataset, 'LF_udem1_DIST_1.log')
-out_dataset = os.path.join(path_to_proj, 'dataset_LanePose_sim', 'default_r1')
+path_dataset = path_to_proj
+path_file = os.path.join(path_dataset, 'LF_loop_empty_DIST.log')
+out_dataset = os.path.join(path_to_proj, 'dataset_LanePose_sim', 'default_r3')
 out_images = os.path.join(out_dataset, 'images')
 
 f_reader = Reader(path_file)
@@ -61,7 +61,7 @@ data, metadata = f_reader.read()
 for i, entry in enumerate(data[0]):
     pic_name = ''.join(['default_', str(i), '_sim.jpg'])
     pic_path = os.path.join(out_images, pic_name)
-    img = Image.fromarray(entry.astype('uint8'), 'L')
+    img = Image.fromarray(entry.astype('uint8')).convert('L')
     img.save(pic_path, format="JPEG")
 
 ds = []
