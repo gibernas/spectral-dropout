@@ -103,8 +103,7 @@ if __name__ == "__main__":
     else:
         raise RuntimeError ('You did not provide a valid model to train!')
     time_start = time.time()
-    model_save_name = '_'.join([model.name, str(time_start), 'lr', str(args.lr),
-                               'bs', str(args.batch_size), 'totepo', str(args.epochs)])
+
     print(model)
 
     # Define the optimizer
@@ -113,11 +112,17 @@ if __name__ == "__main__":
                                 weight_decay=1e-3)
 
     list_path_datasets = []
+    datasets = ''
     if 'real' in args.dataset:
         list_path_datasets.append(path_dataset_real)
+        datasets += 'real'
     if 'sim' in args.dataset:
         list_path_datasets.append(path_dataset_sim)
+        datasets += 'sim'
     training_loader, validation_loader = get_data_loaders(list_path_datasets, args)
+
+    model_save_name = '_'.join([model.name, str(time_start), 'lr', str(args.lr),
+                                'bs', str(args.batch_size), 'dataset', str(datasets), 'totepo', str(args.epochs)])
 
     writer = SummaryWriter(os.path.join('runs', model_save_name))
     model_data_log = []
