@@ -96,8 +96,8 @@ if __name__ == "__main__":
     else:
         raise RuntimeError ('You did not provide a valid model to train!')
     time_start = time.time()
-    model_save_name = ''.join([model.name, str(time_start), '_lr', str(args.lr),
-                               '_bs', str(args.batch_size), '_totepo', str(args.epochs)])
+    model_save_name = '_'.join([model.name, str(time_start), 'lr', str(args.lr),
+                               'bs', str(args.batch_size), 'totepo', str(args.epochs)])
     print(model)
 
     # Define the optimizer
