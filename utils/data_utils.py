@@ -69,12 +69,16 @@ def get_data_loaders(list_path_datasets, args):
         log_names = sorted(next(os.walk(path_dataset))[1])
 
         for idx, log_name in enumerate(log_names, 1):
-            log_path = os.path.join(path_dataset, log_name)
-            csv_path = os.path.join(log_path, 'output_pose.csv')
-            img_path = os.path.join(log_path, 'images')
-            dataset_dict['ts_' + str(idx) + '_' + env] = LanePoseDataset(csv_file=csv_path,
-                                                                         img_path=img_path,
-                                                                         transform=tfs)
+            # We don't want to load the test set. This will be loaded in a separate dict TODO
+            if 'test' in log_name:
+                pass
+            else:
+                log_path = os.path.join(path_dataset, log_name)
+                csv_path = os.path.join(log_path, 'output_pose.csv')
+                img_path = os.path.join(log_path, 'images')
+                dataset_dict['ts_' + str(idx) + '_' + env] = LanePoseDataset(csv_file=csv_path,
+                                                                             img_path=img_path,
+                                                                             transform=tfs)
 
     dataset = torch.utils.data.ConcatDataset(dataset_dict.values())
 
@@ -87,6 +91,7 @@ def get_data_loaders(list_path_datasets, args):
 
     shuffle_dataset = True
     if shuffle_dataset:
+        np.random.seed(123)  # So that each model has the same training/validation datasets
         np.random.shuffle(indices)
 
     train_indices, val_indices = indices[split:], indices[:split]
