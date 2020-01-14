@@ -155,7 +155,7 @@ if __name__ == "__main__":
     writer.close()
 
     # Write config csv
-    config_name = '_'.join([model_save_name, str(args.dataset), 'config.csv'])
+    config_name = '_'.join([model_save_name, str(datasets), 'config.csv'])
     config_path = os.path.join(path_save, config_name)
     with open(config_path, 'w') as csv_config:
         wr = csv.writer(csv_config, quoting=csv.QUOTE_ALL)
