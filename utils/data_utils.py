@@ -71,7 +71,6 @@ def get_data_loaders(list_path_datasets, args):
         log_names = sorted(next(os.walk(path_dataset))[1])
 
         for idx, log_name in enumerate(log_names, 1):
-            # We don't want to load the test set. This will be loaded in a separate dict TODO
             if 'test' in log_name:
                 pass
             else:
@@ -111,3 +110,52 @@ def get_data_loaders(list_path_datasets, args):
                                    num_workers=args.workers,
                                    sampler=valid_sampler)
     return training_loader, validation_loader
+
+
+def get_test_data_loaders(list_path_datasets, args):
+    # Define required transformations of dataset
+    tfs = transforms.Compose([
+        transforms.Resize(args.image_res),
+        TransCropHorizon(0.5, set_black=False),
+        transforms.Grayscale(num_output_channels=1),
+        ToCustomTensor(),
+    ])
+    dataset_dict = {}
+    for path_dataset in list_path_datasets:
+        single_dataset_dict = {}
+        print('Looking in: %s' % path_dataset)
+        env = path_dataset.split('_')[-1]
+        # Load data & create dataset
+        log_names = sorted(next(os.walk(path_dataset))[1])
+
+        for idx, log_name in enumerate(log_names, 1):
+            if 'test' not in log_name:
+                pass
+            else:
+                log_path = os.path.join(path_dataset, log_name)
+                csv_path = os.path.join(log_path, 'output_pose.csv')
+                img_path = os.path.join(log_path, 'images')
+                single_dataset_dict['ts_' + str(idx) + '_' + env] = LanePoseDataset(csv_file=csv_path,
+                                                                                    img_path=img_path,
+                                                                                    transform=tfs)
+
+        dataset_dict[env] = torch.utils.data.ConcatDataset(single_dataset_dict.values())
+
+    dataset_total = torch.utils.data.ConcatDataset(dataset_dict.values())
+
+    real_test_loader = DataLoader(dataset_dict['real'],
+                                  batch_size=args.batch_size,
+                                  num_workers=args.workers,
+                                  )
+
+    sim_test_loader = DataLoader(dataset_dict['sim'],
+                                 batch_size=args.batch_size,
+                                 num_workers=args.workers,
+                                 )
+    entire_test_loader = DataLoader(dataset_total,
+                                    batch_size=args.batch_size,
+                                    num_workers=args.workers,
+                                    )
+
+    return [real_test_loader, sim_test_loader, entire_test_loader]
+

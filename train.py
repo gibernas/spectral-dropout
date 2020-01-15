@@ -1,6 +1,8 @@
 import csv
 import os
 import time
+import signal
+import sys
 
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -21,6 +23,18 @@ WEIGHT_DECAY = 1e-3
 
 # Get a parser for the training settings
 parser = get_parser()
+
+
+def signal_handler(sig, frame):
+    print('Aborting, trying to save the model')
+    try:
+        final_model_save_name = ''.join([model_save_name, 'final', '.pt'])
+        torch.save(model, os.path.join(path_save, model_save_name, final_model_save_name))
+        print('Model saved!')
+    except NameError:
+        print('Model not saved, probably not existing yet')
+    finally:
+        sys.exit(0)
 
 
 def train(model, opt, train_loader, dev=torch.device('cpu')):
@@ -87,7 +101,7 @@ if __name__ == "__main__":
         path_dataset_root = '/cluster/scratch/gibernas'
     else:
         raise RuntimeError('The specified host is not supported')
-    path_dataset_real = os.path.join(path_dataset_root, 'dataset_LanePose')
+    path_dataset_real = os.path.join(path_dataset_root, 'dataset_LanePose_real')
     path_dataset_sim = os.path.join(path_dataset_root, 'dataset_LanePose_sim')
 
     # Define the model
@@ -124,7 +138,11 @@ if __name__ == "__main__":
     model_save_name = '_'.join([model.name, str(time_start), 'lr', str(args.lr),
                                 'bs', str(args.batch_size), 'dataset', str(datasets), 'totepo', str(args.epochs)])
 
-    writer = SummaryWriter(os.path.join('runs', model_save_name))
+    writer = SummaryWriter(os.path.join(path_dataset_root, 'runs', model_save_name))
+
+    # Defining a saving strategy if the program aborts
+    signal.signal(signal.SIGINT, signal_handler)
+
     model_data_log = []
     for epoch in range(args.epochs):
         time_epoch_start = time.time()
@@ -149,10 +167,13 @@ if __name__ == "__main__":
         # Backup model after every 10 epochs
         if (epoch + 1) % 10 == 0:
             current_model_save_name = ''.join([model_save_name, '_epo%s' % epoch, '.pt'])
-            os.mkdir(os.path.join(path_save, model_save_name))
+            if not os.path.exists(os.path.join(path_save, model_save_name)):
+                os.mkdir(os.path.join(path_save, model_save_name))
             torch.save(model, os.path.join(path_save, model_save_name,  current_model_save_name))
             print('Model saved on epoch %s' % epoch)
 
+    final_model_save_name = ''.join([model_save_name, 'final' , '.pt'])
+    torch.save(model, os.path.join(path_save, model_save_name, final_model_save_name))
     writer.close()
 
     # Write config csv

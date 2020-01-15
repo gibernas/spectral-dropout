@@ -7,3 +7,5 @@ saved_models
 varia
 
 Makefile
+
+evaluation_results.csv
