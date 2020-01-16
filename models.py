@@ -183,4 +183,6 @@ class SpectralDropoutEasyCNN(nn.Module):
         out = F.relu(self.lin2(out))
         out = self.drop_out_lin3(out)
         out = torch.tanh(self.lin3(out))
+
         return out
+

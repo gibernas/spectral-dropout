@@ -44,7 +44,6 @@ def plot_hidden(writer, activations_batch, i, layer_name='default'):
     We expect grayscale images. If multiple channels are present, they refer to filter channels, not image channles"""
 
     num_filter_channels = activations_batch.shape[1]
-
     for idx in range(num_filter_channels):
         try:
             single_channel = activations_batch[:, idx, :, :]

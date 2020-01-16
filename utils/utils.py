@@ -190,12 +190,12 @@ def weights_init(m):
 
 def spectral_masking(T):
     T = T.detach().cpu().numpy()
-    threshold = -0.1
-    p_keep = 1
-    mask_tresh = np.abs(T) > np.max(T) ** threshold # questi li tengo, exp treshold bsc log scale
+    # threshold = -0.1
+    p_keep = 0.8
+    # mask_tresh = np.abs(T) > np.max(T) ** threshold # questi li tengo, exp treshold bsc log scale
     mask_dropout = np.random.random_sample(T.shape) < p_keep # questi li tengo
-    mask = mask_tresh * mask_dropout
-    T[~mask] = 0
+    # mask = mask_tresh * mask_dropout
+    T[~mask_dropout] = 0
     return torch.from_numpy(T)
 
 
