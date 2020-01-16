@@ -168,10 +168,12 @@ class SpectralDropoutEasyCNN(nn.Module):
         self.lin2 = nn.Linear(512, 256)
         self.drop_out_lin3 = nn.Dropout(0.1)
         self.lin3 = nn.Linear(256, 2)
+        self.dropout_layer = nn.Dropout2d(p=0.2)        
 
     def forward(self, x):
         out = to_spectral(x)
-        out = spectral_masking(out).to(device=self.dev)
+        #out = spectral_masking(out,self.dev)
+        out = self.dropout_layer(out)
         out = to_spatial(out)
         out = self.layer1(out)
         out = self.layer2(out)
