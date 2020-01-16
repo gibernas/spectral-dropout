@@ -138,7 +138,7 @@ if __name__ == "__main__":
     model_save_name = '_'.join([model.name, str(time_start), 'lr', str(args.lr),
                                 'bs', str(args.batch_size), 'dataset', str(datasets), 'totepo', str(args.epochs)])
 
-    writer = SummaryWriter(os.path.join(path_dataset_root, 'runs', model_save_name))
+    writer = SummaryWriter(os.path.join(path_dataset_root, 'runs2', model_save_name))
 
     # Defining a saving strategy if the program aborts
     signal.signal(signal.SIGINT, signal_handler)
