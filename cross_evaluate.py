@@ -22,7 +22,9 @@ parser = get_parser()
 def evaluate(model, test_loader, dev=torch.device('cpu')):
     model.eval()
     test_loss = 0
+    print('loader of size: %s' % len(test_loader))
     with torch.no_grad():
+        print(test_loader.dataset.datasets)
         for batch_idx, (images, poses) in enumerate(test_loader):
             # Assign Tensors to Cuda device
             images, poses = images.double().to(device=dev), poses.to(device=dev)
@@ -31,7 +33,8 @@ def evaluate(model, test_loader, dev=torch.device('cpu')):
             # Feedforward
             outputs = model(images)
             test_loss += weighted_l1(poses, outputs).item()
-            return test_loss / len(test_loader)
+    print('Test loss: %s' % (test_loss / len(test_loader)))
+    return test_loss / len(test_loader)
 
 
 if __name__ == '__main__':
@@ -62,7 +65,7 @@ if __name__ == '__main__':
             if filepath.endswith('.pt') and 'final' in filepath:
                 models.append((filepath, os.path.splitext(filename)[0]))
 
-    # Create data loaders for: only sim / only real (?/ both)
+    # Create data loaders for: only sim / only real / both
     test_loaders = get_test_data_loaders(datasets_list, args)
 
     # Test all models on all datasets
@@ -71,7 +74,7 @@ if __name__ == '__main__':
     for model_entry in models:
         print('#'*20 + "\nEvaluating model %s" % model_entry[1])
         model = torch.load(model_entry[0], map_location=device)
-        model_results = []
+        model_results = [model_entry[1]]
         for test_loader in test_loaders:
             print('dataset: %s' % test_loader)
             model_dataset_loss = evaluate(model, test_loader, dev=device)
@@ -80,6 +83,6 @@ if __name__ == '__main__':
     print('#' * 20 + '\n' + 'Evaluation ended!\n' + '#' * 20)
 
     # Save scores
-    df = pd.DataFrame(test_results, columns=['RealDataset', 'SimDataset', 'EntireDataset'])
-    path_csv = os.path.join(path_to_proj, 'evaluation_results.csv')
-    df.to_csv(path_or_buf=path_csv)
+    df = pd.DataFrame(test_results, columns=['ModelName', 'RealDataset', 'SimDataset'])
+    path_csv = os.path.join(path_to_proj, 'results', 'evaluation_results.csv')
+    df.to_csv(path_or_buf=path_csv, index=False)

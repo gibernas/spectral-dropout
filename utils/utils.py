@@ -234,21 +234,21 @@ class Reshaper:
 
 def to_spectral(x):
     return dct.dct_2d(x)
-    for b in x:
-        for c in b:
-            # c  = torch.from_numpy(dct(dct(c.T.detach().cpu().numpy(), norm='ortho').T, norm='ortho'))
-            inp = c.detach().cpu().numpy()
-            c = torch.from_numpy(dct.dct2(inp)) 
-    return x
+    # for b in x:
+    #     for c in b:
+    #         # c  = torch.from_numpy(dct(dct(c.T.detach().cpu().numpy(), norm='ortho').T, norm='ortho'))
+    #         inp = c.detach().cpu().numpy()
+    #         c = torch.from_numpy(dct.dct2(inp))
+    # return x
 
 
 def to_spatial(x):
     return dct.idct_2d(x)
-    for b in x:
-        for c in b:
-            # c = torch.from_numpy(idct(idct(c.T.detach().cpu().numpy(), norm='ortho').T, norm='ortho'))
-            c = torch.from_numpy(dct.idct2(c.detach().cpu().numpy()))
-    return x
+    # for b in x:
+    #     for c in b:
+    #         # c = torch.from_numpy(idct(idct(c.T.detach().cpu().numpy(), norm='ortho').T, norm='ortho'))
+    #         c = torch.from_numpy(dct.idct2(c.detach().cpu().numpy()))
+    # return x
 
 
 def get_parser():

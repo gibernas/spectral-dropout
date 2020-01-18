@@ -141,8 +141,6 @@ def get_test_data_loaders(list_path_datasets, args):
 
         dataset_dict[env] = torch.utils.data.ConcatDataset(single_dataset_dict.values())
 
-    dataset_total = torch.utils.data.ConcatDataset(dataset_dict.values())
-
     real_test_loader = DataLoader(dataset_dict['real'],
                                   batch_size=args.batch_size,
                                   num_workers=args.workers,
@@ -152,10 +150,6 @@ def get_test_data_loaders(list_path_datasets, args):
                                  batch_size=args.batch_size,
                                  num_workers=args.workers,
                                  )
-    entire_test_loader = DataLoader(dataset_total,
-                                    batch_size=args.batch_size,
-                                    num_workers=args.workers,
-                                    )
 
-    return [real_test_loader, sim_test_loader, entire_test_loader]
+    return [real_test_loader, sim_test_loader]
 

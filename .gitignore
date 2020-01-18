@@ -5,7 +5,8 @@ runs
 dataset*
 saved_models
 varia
-
-Makefile
-
+evaluation_results_augmented.csv
 evaluation_results.csv
+Makefile
+results
+old
