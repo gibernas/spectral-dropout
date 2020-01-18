@@ -42,3 +42,6 @@ Optional:
 - `cross_evaluate.py`: Python script to evaluate models on all "final" models. The "final" models are saved when training finishes, or is interrupted. They can be recognized by the keyword "final" in the name.
 
 - `utils/`: contains utility functions
+
+### Results
+The trained models can be found [here](https://drive.google.com/open?id=1eYSFGBzr0QxTWYcoy9CWU4Fno5F8VW1F) 
