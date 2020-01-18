@@ -11,7 +11,6 @@ from losses import weighted_l1
 from models import VanillaCNN, SpectralDropoutCNN, SpectralDropoutEasyCNN
 from utils.data_utils import get_data_loaders
 from utils.utils import get_parser
-# from utils.visualization import plot_hidden
 
 # System
 path_to_home = os.environ['HOME']
@@ -120,20 +119,6 @@ if __name__ == "__main__":
     time_start = time.time()
 
     print(model)
-    
- #   visualization = {}
- #   def hook_fn(m, i, o):
- #        visualization[m] = o
- #
- #
- #   def get_all_layers(net):
- #       for name, layer in net._modules.items():
- #           if isinstance(layer, torch.nn.Sequential):
- #               get_all_layers(layer)
- #           else:
- #               layer.register_forward_hook(hook_fn)
- #   
- #   get_all_layers(model)    
 
     # Define the optimizer
     optimizer = torch.optim.SGD(model.parameters(),
@@ -169,9 +154,6 @@ if __name__ == "__main__":
 
         training_loss = train(model, optimizer, training_loader, dev=device)
         writer.add_scalar('Loss/train', training_loss, epoch)
-#        for i, key in enumerate(visualization.keys()):
-#            batch = visualization[key]
-#            plot_hidden(writer, batch, i, layer_name=key._get_name())
         
         validation_loss = test(model, validation_loader, dev=device)
         writer.add_scalar('Loss/val', validation_loss, epoch)
